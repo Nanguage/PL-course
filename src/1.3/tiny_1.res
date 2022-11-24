@@ -140,8 +140,8 @@ module Compiler2 = {
         }
     }
 
-    type varType = Local | Tmp
-    type cenv = list<(string, varType)>
+    type varType = Local(string) | Tmp
+    type cenv = list<varType>
     
     let rec stenv2stm = (instrs: StackWithEnv.instrs, cenv: cenv): StackMachine.instrs => {
         switch instrs {
@@ -149,11 +149,11 @@ module Compiler2 = {
         | list{Add, ...rest} => list{Add, ...stenv2stm(rest, cenv)}
         | list{Mul, ...rest} => list{Mul, ...stenv2stm(rest, cenv)}
         | list{Let(x), ...rest} => {
-            let code1 = stenv2stm(rest, list{(x, Local), ...cenv})
+            let code1 = stenv2stm(rest, list{Local(x), ...cenv})
             let code2 = list{StackMachine.Swap, StackMachine.Pop}
             Belt.List.concat(code1, code2)
           }
-        | list{Var(x), ...rest} => list{Var(index(cenv, (x, Local), 0)), ...stenv2stm(rest, list{("", Tmp), ...cenv})}
+        | list{Var(x), ...rest} => list{Var(index(cenv, Local(x), 0)), ...stenv2stm(rest, list{Tmp, ...cenv})}
         | list{} => list{}
         }
     }
